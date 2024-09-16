@@ -19,6 +19,7 @@
 
 #include "core_safe.h"
 
+#include "SimplyAtomic.h"
 #include <atomic>
 extern std::atomic<bool> started;
 //extern std::atomic<bool> menu_locked;
@@ -27,8 +28,7 @@ std::atomic<bool> frame_ready = false;
 
 #include "menu.h"
 
-//extern DisplayTranslator_Configured *tft;
-//extern DisplayTranslator_Configured displaytranslator;
+void setup_menu(bool pressed_state = HIGH);
 
 void setup_screen() {
     #ifdef ENABLE_SCREEN
@@ -36,14 +36,16 @@ void setup_screen() {
         pinMode(ENCODER_KNOB_R, INPUT_PULLUP);
         pinMode(PIN_BUTTON_A, INPUT_PULLDOWN);
         pinMode(PIN_BUTTON_B, INPUT_PULLDOWN);
-    
-        //tft = &displaytranslator; 
-        //tft->init();
 
         tft_print((char*)"Ready!");
         tft_clear();
 
-        setup_menu();
+        Debug_println("About to setup_menu.."); 
+        setup_menu(HIGH);
+
+        tft_print("HUP!");      // <3 roo
+        Debug_println("About to menu->updateDisplay() for the first time..");
+        menu->updateDisplay();
 
         Debug_println("About to init menu.."); Serial_flush();
         menu->start();
@@ -65,15 +67,11 @@ void push_display() {
     if (!menu->tft->ready()) return;
     if (!frame_ready) return;
     if (is_locked()) return;
+
     acquire_lock();
-        
-    //uint32_t interrupts = save_and_disable_interrupts();
     menu->updateDisplay();
-    //restore_interrupts(interrupts);
     last_drawn = millis();
-
     frame_ready = false;
-
     release_lock();
 }
 
@@ -85,21 +83,22 @@ void draw_screen() {
     //if (locked || menu==nullptr) 
     //    return;
     while (is_locked() || ticked || frame_ready) {
-        #ifdef PROCESS_USB_ON_SECOND_CORE
+        /*#if defined(PROCESS_USB_ON_SECOND_CORE) && defined(USE_TINYUSB)
             // doing this here instead of on first core means that two Microlidians powered up together won't clock drift badly
-            // however, think it causes a deadlock if we don't process MIDI while waiting for a lock..?
-            #ifdef USE_TINYUSB
+            //ATOMIC() {
                 USBMIDI.read();
-            #endif
-        #endif
-        delay(MENU_MS_BETWEEN_REDRAW/8);
+            //}
+        #endif*/
+        //delay(MENU_MS_BETWEEN_REDRAW/8);
     };
     //menu_locked = true;
     acquire_lock();
     //uint32_t interrupts = save_and_disable_interrupts();
     frame_ready = false;
-    menu->display();
-    frame_ready = true;
+    ATOMIC() {
+        menu->display();
+        frame_ready = true;
+    }
     //restore_interrupts(interrupts);
     release_lock();
 
@@ -126,25 +125,32 @@ void loop1() {
     while(is_locked()) {
         delay(MENU_MS_BETWEEN_REDRAW/8);
 
-        #ifdef PROCESS_USB_ON_SECOND_CORE
+        /*#ifdef PROCESS_USB_ON_SECOND_CORE
             // doing this here instead of on first core means that two Microlidians powered up together won't clock drift badly
             // however, think it causes a deadlock if we don't process MIDI while waiting for a lock..?
             #ifdef USE_TINYUSB
                 USBMIDI.read();
             #endif
-        #endif
+        #endif*/
     }
-    if (menu!=nullptr && millis() - last_pushed > MENU_MS_BETWEEN_REDRAW) {
-        draw_screen();
-        last_pushed = millis();
+    ATOMIC() {
+        if (menu!=nullptr && millis() - last_pushed > MENU_MS_BETWEEN_REDRAW) {
+            draw_screen();
+            last_pushed = millis();
+        }
     }
     #ifdef ENABLE_CV_INPUT
         static unsigned long last_cv_update = 0;
-        if (parameter_manager->ready_for_next_update() && !is_locked()) {
-            acquire_lock();
-            parameter_manager->throttled_update_cv_input__all(time_between_cv_input_updates, false, false);
-            release_lock();
-            last_cv_update = millis();
+        if (cv_input_enabled) {
+            if (parameter_manager->ready_for_next_update() && !is_locked()) {
+                acquire_lock();
+                //ATOMIC() 
+                {
+                    parameter_manager->throttled_update_cv_input__all(time_between_cv_input_updates, false, false);
+                }
+                release_lock();
+                last_cv_update = millis();
+            }
         }
     #endif
 }

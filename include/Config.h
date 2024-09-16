@@ -38,6 +38,12 @@
     #endif
 #endif
 
+// default for using MidiMUSO CV12 mappings on the DIN output
+#define DEFAULT_OUTPUT_TYPE     OUTPUT_TYPE::DRUMS_MIDIMUSO
+
+// default to using straight MIDI output on the DIN output, eg for connecting directly to a drum machine
+//#define DEFAULT_OUTPUT_TYPE     OUTPUT_TYPE::NORMAL
+
 //#define DEFAULT_CLOCK_MODE  CLOCK_EXTERNAL_USB_HOST      
 
 /*#define SCREEN_WIDTH 135
@@ -52,8 +58,9 @@
 #define ENABLE_CV_INPUT 0x48
 //#define ENABLE_PARAMETER_MAPPING
 
-// defined in platformio.ini build flags
 //#define ENABLE_DEBUG_SERIAL
+
+// defined in platformio.ini build flags
 //#define ENABLE_STORAGE
 //#define ENABLE_CALIBRATION_STORAGE  
 //#define LOAD_CALIBRATION_ON_BOOT
@@ -65,9 +72,14 @@
 
 //#define Serial_println(X) { if (Serial) Serial.println(x); }
 
+// choose what type of rp2040 serial driver to use on the DIN MIDI output
+// this is specified in the platformio.ini because it needs to be picked up by the midihelpers midi_usb_rp2040.cpp file
 //#define MIDI_SERIAL_SOFTWARE    // this disnae work at all?  
 //#define MIDI_SERIAL_HARDWARE    // THIS FUCKIN WORKS LADS!!!
-//#define MIDI_SERIAL_SPIO          // this fuckin works too!  
+//#define MIDI_SERIAL_SPIO        // this fuckin works too!  
 
-#define ENABLE_ENVELOPES
+//#define ENABLE_ENVELOPES
+#define DEFAULT_ENVELOPE_CLASS Weirdolope
+//#define DEFAULT_ENVELOPE_CLASS RegularEnvelope
 
+//#define PROCESS_USB_ON_SECOND_CORE

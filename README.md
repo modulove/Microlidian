@@ -1,3 +1,5 @@
+This work is licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
 # Microlidian / μlidian
 
 WIP.
@@ -18,11 +20,13 @@ The aim here is to have a flexible and extensible MIDI generator based on the mu
 - [mymenu](https://github.com/doctea/mymenu)
 - [midihelpers](https://github.com/doctea/midihelpers)
 - [parameters](https://github.com/doctea/parameters)
+- [seqlib](https://github.com/doctea/seqlib)
 - [patched Encoder library](https://github.com/doctea/Encoder) 
 - [Vortigont LinkedList library](https://github.com/vortigont/LinkedList)
-- [patched bodme/TFT_eSPI library](https://github.com/doctea/TFT_eSPI)
-- vscode+platformio
-- the gfx library by Bodmer for fast DMA writes
+- ~~[patched bodme/TFT_eSPI library](https://github.com/doctea/TFT_eSPI)~~ dont think this needed anymore?
+- Adafruit TinyUSB library patched with my patch from https://github.com/adafruit/Adafruit_TinyUSB_Arduino/issues/238
+- vscode+platformio+earlephilhower core
+- the TFT_eSPI gfx library by Bodmer for fast DMA writes
 
 ## Hardware/PCB wiring
 
@@ -31,6 +35,11 @@ The aim here is to have a flexible and extensible MIDI generator based on the mu
 - I'm using [These small TFT screens](https://www.aliexpress.com/item/4000661571044.html)
 - And [These encoders](https://www.aliexpress.com/item/33022441687.html)
 - [These +/-24v ADC breakout boards](https://thepihut.com/products/ads1015-24v-adc-breakout)
+
+### Images
+
+![Prototype Eurorack modules](media/Microlidians.jpg?raw=true)
+
 
 ### Breadboard wiring
 
@@ -54,7 +63,7 @@ Seeed XIAO RP2040 pins.  Counting clockwise starting from top-right:-
 - D1       -> Encoder button
 - D0       -> ST7789 DC (swapped with D9 on PCB version)
 
-## TODO
+## TODO/future ideas
 
 - ~~Implement a basic sequencer~~
   - ~~with Euclidian stuff on top of that~~
@@ -66,7 +75,7 @@ Seeed XIAO RP2040 pins.  Counting clockwise starting from top-right:-
   - eg raga sequencer that loads .mid files
 - MIDI input (via USB, for setting options, ~~clock sync,~~ forwarding notes and drums)
   - options to enable/disable all this
-- MIDI output (~~via TRS/DIN, for sending clock, triggers, notes~~ and ~triggerable envelopes~~/LFO)
+- MIDI output (~~via TRS/DIN, for sending clock, triggers, notes~~ and ~triggerable envelopes/LFO~~)
   - ~~basic hacky approach is working~~
   - standard gm drum machine option with assignable drum numbers
   - midimuso cv trigger+cv modes
@@ -75,12 +84,11 @@ Seeed XIAO RP2040 pins.  Counting clockwise starting from top-right:-
   - options to enable/disable all this
 - Integrate CV inputs
   - ~~basic cv input parameter~~
-  - for controlling parameters
-  - low-memory version of the mapping tool, since providing options for all options of 20 tracks uses 100K+ and takes us over the available RAM!
-    - worked around for now by not allowing the sources for a slot to be changed
+  - ~~for controlling parameters~~
+  - ~~low-memory version of the mapping tool, since providing options for all options of 20 tracks uses 100K+ and takes us over the available RAM!~~
   - ~~maybe for clock too?~~
   - implement CV input 'reset'
-  - Setting a per-parameter range for modulation
+  - ~~Setting a per-parameter range for modulation~~
   - Port Pitch CV->MIDI and chord quantisation stuff from usb_midi_clocker
 - MIDI inputs for controlling parameters
   - Configurable MIDI inputs for control surfaces from host USB
@@ -104,7 +112,7 @@ Seeed XIAO RP2040 pins.  Counting clockwise starting from top-right:-
   - 'euclidian within euclidian'?  so eg we fill in triggers in between other triggers?
 - rhythm-synced LFO that sets a cycle of the waveform to the length between triggers
 - Ability to boot up as a USB flash drive, for copying files to/from the LittleFS flash?
-- Allow holding a button to go into firmware update mode before running much code at all as a failsafe against bad code that won't complete setup() or first loop()
+- ~~Allow holding a button to go into firmware update mode before running much code at all as a failsafe against bad code that won't complete setup() or first loop()~~ DONE, hold both buttons while booting up to go straight into firmware update/uf2 mode
 
 ### Known problems/gotchas
 
@@ -115,6 +123,8 @@ Seeed XIAO RP2040 pins.  Counting clockwise starting from top-right:-
 - Slow loading presets causing pauses and problems
 - we don't seem to get around to doing a menu update_ticks() for every tick, so the ParameterInputDisplay graph appears very noisy unless backfilling values.  even updating it from a callback for every parameter input read() didnt seem to be fast enough.  so might mean that very fast changes are being missed..
 - Sometimes crashes waiting for USB MIDI or something... suspect perhaps garbled USB MIDI is cause?
+  - Actually, think this is the bug in the TinyUSB library that is fixed/worked around by my simple patch mentioned in [https://github.com/adafruit/Adafruit_TinyUSB_Arduino/issues/238](https://github.com/adafruit/Adafruit_TinyUSB_Arduino/issues/293#issuecomment-1666959735)
+- Soft reboot when using uClock crashes/does not start up properly - works fine from cold boot/first power on though
 
 ## Done
 
